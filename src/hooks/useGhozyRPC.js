@@ -12,8 +12,8 @@ const ghozyChain = {
         symbol: 'ETH',
     },
     rpcUrls: {
-        default: { http: ['http://localhost:8545'] },
-        public: { http: ['http://localhost:8545'] },
+        default: { http: [import.meta.env.VITE_L2_RPC_URL || 'http://localhost:8545'] },
+        public: { http: [import.meta.env.VITE_L2_RPC_URL || 'http://localhost:8545'] },
     },
 }
 
