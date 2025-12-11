@@ -19,7 +19,13 @@ const ghozyChain = {
 
 const client = createPublicClient({
     chain: ghozyChain,
-    transport: http()
+    transport: http(ghozyChain.rpcUrls.default.http[0], {
+        fetchOptions: {
+            headers: {
+                "ngrok-skip-browser-warning": "true"
+            }
+        }
+    })
 })
 
 export const useGhozyRPC = () => {
