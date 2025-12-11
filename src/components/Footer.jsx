@@ -39,7 +39,7 @@ const Footer = () => {
                     {/* Links */}
                     <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
                         <Link to="/" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Home</Link>
-                        <a href="http://localhost:5173" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Main Site</a>
+
                         <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Chain ID: 5207</span>
                     </div>
                 </div>

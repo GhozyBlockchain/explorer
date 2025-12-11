@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowRightLeft } from 'lucide-react'
+import { FileText } from 'lucide-react'
 
-const TransactionsTable = ({ transactions }) => {
+const TransactionsTable = ({ transactions, compact = false }) => {
     if (!transactions || transactions.length === 0) {
         return (
-            <div className="card" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+            <div style={{ textAlign: 'center', padding: '1rem', color: '#8a8a8a', fontSize: '0.9rem' }}>
                 No transactions yet
             </div>
         )
@@ -17,7 +17,7 @@ const TransactionsTable = ({ transactions }) => {
     }
 
     const formatValue = (value) => {
-        if (!value) return '0'
+        if (!value) return '0 ETH'
         const eth = Number(value) / 1e18
         if (eth === 0) return '0 ETH'
         if (eth < 0.0001) return '<0.0001 ETH'
@@ -34,71 +34,52 @@ const TransactionsTable = ({ transactions }) => {
     }
 
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="card"
-        >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                <ArrowRightLeft size={20} color="var(--accent-primary)" />
-                <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Recent Transactions</h3>
-            </div>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {transactions.map((tx, i) => (
+                <div key={tx.hash} style={{
+                    padding: '1rem',
+                    borderBottom: i < transactions.length - 1 ? '1px solid #222' : 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1rem'
+                }}>
+                    {/* Icon */}
+                    <div style={{
+                        width: '48px', height: '48px', background: '#222', borderRadius: '8px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                    }}>
+                        <FileText size={20} color="#8a8a8a" />
+                    </div>
 
-            <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-                    <thead>
-                        <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-                            <th style={thStyle}>Tx Hash</th>
-                            <th style={thStyle}>Block</th>
-                            <th style={thStyle}>From</th>
-                            <th style={thStyle}>To</th>
-                            <th style={thStyle}>Value</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {transactions.map((tx, i) => (
-                            <tr key={tx.hash} style={{ borderBottom: i < transactions.length - 1 ? '1px solid var(--border-color)' : 'none' }}>
-                                <td style={tdStyle}>
-                                    <Link to={`/tx/${tx.hash}`} style={{ color: 'var(--accent-primary)', fontFamily: 'monospace' }}>
-                                        {tx.hash.slice(0, 10)}...
-                                    </Link>
-                                </td>
-                                <td style={tdStyle}>
-                                    <Link to={`/block/${tx.blockNumber}`} style={{ color: 'var(--text-primary)' }}>
-                                        {tx.blockNumber?.toString()}
-                                    </Link>
-                                </td>
-                                <td style={tdStyle}>
-                                    <Link to={`/address/${tx.from}`} style={{ color: 'var(--text-secondary)', fontFamily: 'monospace' }}>
-                                        {formatAddress(tx.from)}
-                                    </Link>
-                                </td>
-                                <td style={tdStyle}>
-                                    <Link to={`/address/${tx.to}`} style={{ color: 'var(--text-secondary)', fontFamily: 'monospace' }}>
-                                        {tx.to ? formatAddress(tx.to) : 'Contract Create'}
-                                    </Link>
-                                </td>
-                                <td style={tdStyle}>{formatValue(tx.value)}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </motion.div>
+                    {/* Tx Info */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
+                            <Link to={`/tx/${tx.hash}`} style={{ color: '#3b82f6', fontWeight: '500', textDecoration: 'none', fontFamily: 'monospace' }}>
+                                {tx.hash.slice(0, 10)}...
+                            </Link>
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: '#8a8a8a' }}>
+                            {formatTime(tx.blockTimestamp)}
+                        </div>
+                    </div>
+
+                    {/* From / To Info */}
+                    <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '0.9rem', color: '#fff', marginBottom: '0.2rem' }}>
+                            From <Link to={`/address/${tx.from}`} style={{ color: '#3b82f6', textDecoration: 'none' }}>{formatAddress(tx.from)}</Link>
+                        </div>
+                        <div style={{ fontSize: '0.9rem', color: '#fff', marginBottom: '0.2rem' }}>
+                            To <Link to={`/address/${tx.to}`} style={{ color: '#3b82f6', textDecoration: 'none' }}>{tx.to ? formatAddress(tx.to) : 'Contract'}</Link>
+                        </div>
+
+                        <div style={{ fontSize: '0.75rem', color: '#8a8a8a', padding: '2px 6px', background: '#222', borderRadius: '4px', display: 'inline-block', marginTop: '4px' }}>
+                            {formatValue(tx.value)}
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
     )
-}
-
-const thStyle = {
-    textAlign: 'left',
-    padding: '0.75rem 0.5rem',
-    color: 'var(--text-secondary)',
-    fontWeight: '500',
-    fontSize: '0.85rem'
-}
-
-const tdStyle = {
-    padding: '0.75rem 0.5rem'
 }
 
 export default TransactionsTable

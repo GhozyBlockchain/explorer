@@ -2,10 +2,10 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Box } from 'lucide-react'
 
-const BlocksTable = ({ blocks }) => {
+const BlocksTable = ({ blocks, compact = false }) => {
     if (!blocks || blocks.length === 0) {
         return (
-            <div className="card" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+            <div style={{ textAlign: 'center', padding: '1rem', color: '#8a8a8a', fontSize: '0.9rem' }}>
                 No blocks found
             </div>
         )
@@ -20,61 +20,48 @@ const BlocksTable = ({ blocks }) => {
     }
 
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="card"
-        >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                <Box size={20} color="var(--accent-primary)" />
-                <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Recent Blocks</h3>
-            </div>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {blocks.map((block, i) => (
+                <div key={block.number.toString()} style={{
+                    padding: '1rem',
+                    borderBottom: i < blocks.length - 1 ? '1px solid #222' : 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1rem'
+                }}>
+                    {/* Icon */}
+                    <div style={{
+                        width: '48px', height: '48px', background: '#222', borderRadius: '8px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                    }}>
+                        <Box size={20} color="#8a8a8a" />
+                    </div>
 
-            <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-                    <thead>
-                        <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-                            <th style={thStyle}>Block</th>
-                            <th style={thStyle}>Age</th>
-                            <th style={thStyle}>Txns</th>
-                            <th style={thStyle}>Gas Used</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {blocks.map((block, i) => (
-                            <tr key={block.number.toString()} style={{ borderBottom: i < blocks.length - 1 ? '1px solid var(--border-color)' : 'none' }}>
-                                <td style={tdStyle}>
-                                    <Link to={`/block/${block.number}`} style={{ color: 'var(--accent-primary)', fontWeight: '600' }}>
-                                        #{block.number.toString()}
-                                    </Link>
-                                </td>
-                                <td style={{ ...tdStyle, color: 'var(--text-secondary)' }}>
-                                    {formatTime(block.timestamp)}
-                                </td>
-                                <td style={tdStyle}>{block.transactions.length}</td>
-                                <td style={tdStyle}>
-                                    {((Number(block.gasUsed) / Number(block.gasLimit)) * 100).toFixed(1)}%
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </motion.div>
+                    {/* Block Info */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
+                            <Link to={`/block/${block.number}`} style={{ color: '#3b82f6', fontWeight: '500', textDecoration: 'none' }}>
+                                {block.number.toString()}
+                            </Link>
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: '#8a8a8a' }}>
+                            {formatTime(block.timestamp)}
+                        </div>
+                    </div>
+
+                    {/* Miner / Reward Info */}
+                    <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '0.9rem', color: '#fff', marginBottom: '0.2rem' }}>
+                            Fee Recipient <Link to={`/address/${block.miner}`} style={{ color: '#3b82f6', textDecoration: 'none' }}>{block.miner.slice(0, 6)}...</Link>
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: '#8a8a8a' }}>
+                            <span style={{ color: '#fff', fontWeight: '500' }}>{block.transactions.length}</span> txns
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
     )
-}
-
-const thStyle = {
-    textAlign: 'left',
-    padding: '0.75rem 0.5rem',
-    color: 'var(--text-secondary)',
-    fontWeight: '500',
-    fontSize: '0.85rem'
-}
-
-const tdStyle = {
-    padding: '0.75rem 0.5rem'
 }
 
 export default BlocksTable

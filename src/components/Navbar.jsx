@@ -43,7 +43,7 @@ const Navbar = () => {
                 {/* Nav Links */}
                 <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
                     <Link to="/" style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Home</Link>
-                    <a href="http://localhost:5173" style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Main Site</a>
+
                 </div>
             </div>
         </nav>
