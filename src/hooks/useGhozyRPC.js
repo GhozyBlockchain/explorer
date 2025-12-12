@@ -20,6 +20,7 @@ const ghozyChain = {
 const client = createPublicClient({
     chain: ghozyChain,
     transport: http(ghozyChain.rpcUrls.default.http[0], {
+        batch: true,
         fetchOptions: {
             headers: {
                 "ngrok-skip-browser-warning": "true"
@@ -43,25 +44,24 @@ export const useGhozyRPC = () => {
     const fetchRecentBlocks = useCallback(async (count = 10) => {
         try {
             const currentBlock = await client.getBlockNumber()
+
+            // 1. Fetch recent 10 blocks for UI tables
             const blocks = []
             const txs = []
+            const tableStart = currentBlock > 9n ? currentBlock - 9n : 0n
 
-            const start = currentBlock > BigInt(count) ? currentBlock - BigInt(count - 1) : 0n
-
-            for (let i = currentBlock; i >= start && i >= 0n; i--) {
+            for (let i = currentBlock; i >= tableStart && i >= 0n; i--) {
                 const block = await client.getBlock({ blockNumber: i })
                 blocks.push(block)
 
-                // Collect transactions from blocks
+                // Collect transactions
                 if (block.transactions.length > 0 && txs.length < 10) {
-                    for (const txHash of block.transactions.slice(0, 5)) {
+                    for (const txHash of block.transactions.slice(0, 10)) {
                         if (txs.length >= 10) break
                         try {
                             const tx = await client.getTransaction({ hash: txHash })
                             txs.push({ ...tx, blockTimestamp: block.timestamp })
-                        } catch (e) {
-                            console.error('Failed to fetch tx:', e)
-                        }
+                        } catch (e) { console.error('Failed to fetch tx:', e) }
                     }
                 }
             }
@@ -69,17 +69,46 @@ export const useGhozyRPC = () => {
             setRecentBlocks(blocks)
             setRecentTransactions(txs)
 
-            // Calculate stats
-            if (blocks.length > 1) {
-                const totalTxs = blocks.reduce((sum, b) => sum + b.transactions.length, 0)
-                const timeSpan = Number(blocks[0].timestamp - blocks[blocks.length - 1].timestamp)
-                const tps = timeSpan > 0 ? (totalTxs / timeSpan).toFixed(2) : 0
-                setStats({
-                    totalTransactions: totalTxs,
-                    avgBlockTime: timeSpan > 0 ? (timeSpan / (blocks.length - 1)).toFixed(1) : 2,
-                    tps: tps
+            // 2. Scan up to 1000 blocks for Total Transaction Stats (Chunked)
+            const scanDepth = 1000n
+            const statsStart = currentBlock > scanDepth ? currentBlock - scanDepth : 0n
+
+            // Chunked fetching
+            const chunkSize = 50
+            let totalTxs = 0
+            let firstBlockTime = 0n
+            let lastBlockTime = 0n
+            let blocksCounted = 0
+
+            const processRange = async (from, to) => {
+                const innerPromises = []
+                for (let i = from; i >= to; i--) {
+                    innerPromises.push(client.getBlock({ blockNumber: i, includeTransactions: false }))
+                }
+                const results = await Promise.all(innerPromises)
+                results.forEach(b => {
+                    totalTxs += b.transactions.length
+                    if (blocksCounted === 0) firstBlockTime = b.timestamp
+                    lastBlockTime = b.timestamp
+                    blocksCounted++
                 })
             }
+
+            // Loop in chunks to avoid overloading RPC
+            for (let i = currentBlock; i >= statsStart; i -= BigInt(chunkSize)) {
+                const chunkEnd = (i - BigInt(chunkSize) + 1n) > statsStart ? (i - BigInt(chunkSize) + 1n) : statsStart
+                await processRange(i, chunkEnd)
+            }
+
+            const timeSpan = Number(firstBlockTime - lastBlockTime)
+            const tps = timeSpan > 0 ? (totalTxs / timeSpan).toFixed(2) : '0.00'
+            const avgTime = timeSpan > 0 ? (timeSpan / blocksCounted).toFixed(2) : '2.00'
+
+            setStats({
+                totalTransactions: totalTxs,
+                avgBlockTime: avgTime,
+                tps: tps
+            })
 
             return blocks
         } catch (error) {
